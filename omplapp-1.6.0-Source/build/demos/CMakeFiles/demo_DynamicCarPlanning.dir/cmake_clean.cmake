@@ -1,0 +1,11 @@
+file(REMOVE_RECURSE
+  "../bin/demo_DynamicCarPlanning"
+  "../bin/demo_DynamicCarPlanning.pdb"
+  "CMakeFiles/demo_DynamicCarPlanning.dir/SE2RigidBodyPlanning/DynamicCarPlanning.cpp.o"
+  "CMakeFiles/demo_DynamicCarPlanning.dir/SE2RigidBodyPlanning/DynamicCarPlanning.cpp.o.d"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/demo_DynamicCarPlanning.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

@@ -1,9 +1,13 @@
 .registered
 .DS_Store
 *.swp
-build/
+# Ignore build, bin, and lib globally, but allow specific build folders
 bin/
 lib/
+!omplapp-1.6.0-Source/build/
+!ompl_pinocchio_integration/build/
+!pinocchio/build/
+
 *.pcd
 *.pyc
 *.so
@@ -15,3 +19,4 @@ py-bindings/ompl/bindings_generator.py
 *.so.*
 *.egg-info
 *.pyi
+

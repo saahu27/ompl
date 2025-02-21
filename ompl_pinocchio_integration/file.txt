@@ -1,0 +1,15 @@
+export CMAKE_PREFIX_PATH="/home/sahugf/omplpinnochio/pinocchio:$CMAKE_PREFIX_PATH"
+export PKG_CONFIG_PATH="/home/sahugf/omplpinnochio/pinocchio/lib/pkgconfig:$PKG_CONFIG_PATH"
+
+
+
+sudo apt install cmake build-essential libeigen3-dev libassimp-dev \
+                 libgeos++-dev libx11-dev libgl1-mesa-dev \
+                 libqt5opengl5-dev qtbase5-dev libomniorb4-dev omniorb \
+                 libopenscenegraph-dev openscenegraph
+
+
+This will print the default include paths for your compiler.
+echo | g++ -E -x c++ - -v
+
+
