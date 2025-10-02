@@ -84,10 +84,7 @@ namespace ompl
             PathGeometric(const base::SpaceInformationPtr &si, 
                 std::vector<const base::State *> &states);
 
-            ~PathGeometric() override
-            {
-                freeMemory();
-            }
+            ~PathGeometric() override;
 
             /** \brief Assignment operator */
             PathGeometric &operator=(const PathGeometric &other);

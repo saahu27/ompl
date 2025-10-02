@@ -11,6 +11,14 @@ FiberedProjection::FiberedProjection(ompl::base::StateSpacePtr bundleSpace, ompl
 {
 }
 
+FiberedProjection::~FiberedProjection()
+{
+    if (xFiberTmp_ != nullptr && siFiberSpace_ != nullptr)
+    {
+        siFiberSpace_->freeState(xFiberTmp_);
+    }
+}
+
 void FiberedProjection::lift(const ompl::base::State *xBase, ompl::base::State *xBundle) const
 {
     fiberSpaceSampler_->sampleUniform(xFiberTmp_);

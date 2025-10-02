@@ -63,7 +63,8 @@ namespace ompl
         public:
             FiberedProjection(base::StateSpacePtr bundleSpace, base::StateSpacePtr baseSpace);
 
-            virtual ~FiberedProjection() = default;
+            virtual ~FiberedProjection();
+
 
             virtual void lift(const ompl::base::State *xBase, ompl::base::State *xBundle) const override;
 

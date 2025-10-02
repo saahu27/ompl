@@ -81,9 +81,8 @@ int main()
 
     if (solved)
     {
-        const ompl::base::ProblemDefinitionPtr pdef = planner->getProblemDefinition();
         std::cout << std::string(80, '-') << std::endl;
-        pdef->getSolutionPath()->print(std::cout);
+        ss.getSolutionPath().print(std::cout);
         std::cout << std::string(80, '-') << std::endl;
         OMPL_INFORM("Solved hypercube with %d dimensions after %f seconds.", ndim, timeToCompute);
     }

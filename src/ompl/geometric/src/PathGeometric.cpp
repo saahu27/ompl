@@ -74,6 +74,13 @@ ompl::geometric::PathGeometric::PathGeometric(const base::SpaceInformationPtr &s
     }
 }
 
+ompl::geometric::PathGeometric::~PathGeometric()
+{
+    OMPL_INFORM("PathGeometric destructor called, states_.size()=%zu", states_.size());
+    freeMemory();
+    OMPL_INFORM("PathGeometric destructor complete");
+}
+
 ompl::geometric::PathGeometric &ompl::geometric::PathGeometric::operator=(const PathGeometric &other)
 {
     if (this != &other)
@@ -94,8 +101,10 @@ void ompl::geometric::PathGeometric::copyFrom(const PathGeometric &other)
 
 void ompl::geometric::PathGeometric::freeMemory()
 {
+    OMPL_INFORM("PathGeometric::freeMemory() freeing %zu states, si_=%p", states_.size(), si_.get());
     for (auto &state : states_)
         si_->freeState(state);
+    OMPL_INFORM("PathGeometric::freeMemory() complete");
 }
 
 ompl::base::Cost ompl::geometric::PathGeometric::cost(const base::OptimizationObjectivePtr &opt) const

@@ -170,6 +170,7 @@ namespace ompl
             virtual ~ProblemDefinition()
             {
                 clearStartStates();
+                clearSolutionPaths();
             }
 
             /** \brief Get the space information this problem definition is for */

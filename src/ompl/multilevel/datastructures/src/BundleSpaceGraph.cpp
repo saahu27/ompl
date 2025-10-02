@@ -110,7 +110,19 @@ BundleSpaceGraph::BundleSpaceGraph(const ompl::base::SpaceInformationPtr &si, Bu
 
 BundleSpaceGraph::~BundleSpaceGraph()
 {
+    // Release the solution path BEFORE clearing vertices
+    // This ensures states are freed while the SpaceInformation is still valid
+    if (solutionPath_)
+    {
+        OMPL_DEBUG("BundleSpaceGraph destructor: Resetting solutionPath_ (use_count=%ld)", 
+                   solutionPath_.use_count());
+        solutionPath_.reset();
+    }
+    
+    clearVertices();
     deleteConfiguration(xRandom_);
+    deleteConfiguration(qGoal_);
+    OMPL_DEBUG("BundleSpaceGraph destructor: Complete");
 }
 
 void BundleSpaceGraph::setup()
@@ -189,6 +201,7 @@ void BundleSpaceGraph::clear()
     BaseT::clear();
 
     clearVertices();
+    deleteConfiguration(qGoal_);
     pis_.restart();
 
     graphLength_ = 0;
@@ -200,15 +213,16 @@ void BundleSpaceGraph::clear()
     startConfigurations_.clear();
     goalConfigurations_.clear();
 
-    if (!isDynamic())
+    // Reset solution path to release the shared_ptr and free states
+    if (solutionPath_)
     {
-        if (solutionPath_ != nullptr)
-        {
-            std::static_pointer_cast<geometric::PathGeometric>(solutionPath_)->clear();
-        }
+        solutionPath_.reset();
     }
 
     numVerticesWhenComputingSolutionPath_ = 0;
+
+    qStart_ = nullptr;
+    qGoal_ = nullptr;
 
     importanceCalculator_->clear();
     graphSampler_->clear();
@@ -631,6 +645,7 @@ bool BundleSpaceGraph::getSolution(ompl::base::PathPtr &solution)
                 if (sameComponent(vStart_, qk->index))
                 {
                     solutionPath_ = getPath(vStart_, qk->index);
+                    OMPL_INFORM("Created solutionPath_ at line 647, use_count=%ld", solutionPath_.use_count());
                     goalVertex = qk->index;
                     break;
                 }
@@ -658,8 +673,12 @@ bool BundleSpaceGraph::getSolution(ompl::base::PathPtr &solution)
 
                     if (!valid)
                     {
-                        // reset solutionPath
+                        // Explicitly reset before creating new path to ensure old path is released
+                        OMPL_INFORM("Optimization failed, resetting solutionPath_ (use_count before reset=%ld)", solutionPath_.use_count());
+                        solutionPath_.reset();
+                        // Create new path
                         solutionPath_ = getPath(vStart_, goalVertex);
+                        OMPL_INFORM("Created new solutionPath_ at line 678, use_count=%ld", solutionPath_.use_count());
                     }
                     else
                     {
@@ -668,7 +687,9 @@ bool BundleSpaceGraph::getSolution(ompl::base::PathPtr &solution)
                 }
             }
         }
+        OMPL_INFORM("Assigning solution = solutionPath_ (use_count before assign=%ld)", solutionPath_.use_count());
         solution = solutionPath_;
+        OMPL_INFORM("After assignment, solutionPath_ use_count=%ld", solutionPath_.use_count());
         return true;
     }
     else

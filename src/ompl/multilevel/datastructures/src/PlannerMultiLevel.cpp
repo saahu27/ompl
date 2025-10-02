@@ -57,6 +57,24 @@ PlannerMultiLevel::PlannerMultiLevel(ompl::base::SpaceInformationPtr si, std::st
 
 PlannerMultiLevel::~PlannerMultiLevel()
 {
+    // Clear the main pdef_'s solution paths
+    if (pdef_)
+    {
+        pdef_->clearSolutionPaths();
+    }
+    
+    // Explicitly clear solution paths to ensure proper cleanup order
+    solutions_.clear();
+    
+    // Clear problem definitions which may hold solution paths
+    for (auto &pdef : pdefVec_)
+    {
+        if (pdef)
+        {
+            pdef->clearSolutionPaths();
+        }
+    }
+    pdefVec_.clear();
 }
 
 void PlannerMultiLevel::clear()

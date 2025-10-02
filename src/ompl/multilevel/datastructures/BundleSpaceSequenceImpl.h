@@ -111,6 +111,29 @@ void ompl::multilevel::BundleSpaceSequence<T>::declareBundleSpaces(bool guessPro
 template <class T>
 ompl::multilevel::BundleSpaceSequence<T>::~BundleSpaceSequence()
 {
+    // Clear solutions to free path states before destroying bundle spaces
+    solutions_.clear();
+    
+    // Clear each bundle space's problem definition solutions
+    for (unsigned int k = 0; k < bundleSpaces_.size(); k++)
+    {
+        if (bundleSpaces_.at(k) && bundleSpaces_.at(k)->getProblemDefinition())
+        {
+            bundleSpaces_.at(k)->getProblemDefinition()->clearSolutionPaths();
+        }
+    }
+    
+    // Clear problem definitions which may hold solution paths
+    for (auto &pdef : pdefVec_)
+    {
+        if (pdef)
+        {
+            pdef->clearSolutionPaths();
+        }
+    }
+    pdefVec_.clear();
+    
+    // Delete bundle spaces - their destructors will clean up solutionPath_
     for (unsigned int k = 0; k < bundleSpaces_.size(); k++)
     {
         if (bundleSpaces_.at(k))
@@ -307,6 +330,7 @@ void ompl::multilevel::BundleSpaceSequence<T>::setProblemDefinition(const ompl::
         parent->getProjection()->project(sInitParent, sInitChild);
         parent->getProjection()->project(sInitParent, sInitChild);
         pdefChild->addStartState(sInitChild);
+        siChild->freeState(sInitChild);  // addStartState clones the state, so free the original
 
         // Now project goal state(s) down
         if (type == ompl::base::GoalType::GOAL_STATE)
@@ -317,6 +341,7 @@ void ompl::multilevel::BundleSpaceSequence<T>::setProblemDefinition(const ompl::
             ompl::base::State *sGoalChild = siChild->allocState();
             parent->getProjection()->project(sGoalParent, sGoalChild);
             pdefChild->setGoalState(sGoalChild, epsilon);
+            siChild->freeState(sGoalChild);  // setGoalState clones the state, so free the original
         }
         else if (type == ompl::base::GoalType::GOAL_STATES)
         {
@@ -332,6 +357,7 @@ void ompl::multilevel::BundleSpaceSequence<T>::setProblemDefinition(const ompl::
                 ompl::base::State *sGoalChild = siChild->allocState();
                 parent->getProjection()->project(sGoalParent, sGoalChild);
                 goalStates->addState(sGoalChild);
+                siChild->freeState(sGoalChild);  // addState clones the state, so free the original
             }
             pdefChild->setGoal(goalStates);
         }
