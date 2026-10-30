@@ -37,11 +37,6 @@
 #ifndef OMPL_VAMP_VAMP_SETUP_
 #define OMPL_VAMP_VAMP_SETUP_
 
-#include <ompl/config.h>
-#if !OMPL_HAVE_VAMP
-#error "ompl::vamp::VAMPSetup requires OMPL built with VAMP (OMPL_BUILD_VAMP=ON)."
-#endif
-
 #include <ompl/vamp/VampStateSpace.h>
 #include <ompl/vamp/VampStateValidityChecker.h>
 #include <ompl/vamp/VampMotionValidator.h>
@@ -51,6 +46,7 @@
 #include <ompl/base/ProblemDefinition.h>
 #include <ompl/base/Planner.h>
 #include <ompl/geometric/SimpleSetup.h>
+#include <ompl/geometric/PathGeometric.h>
 #include <ompl/tools/benchmark/Benchmark.h>
 
 #include <vamp/collision/environment.hh>
@@ -65,7 +61,6 @@
 #include <chrono>
 #include <sstream>
 #include <iomanip>
-#include <iostream>
 
 namespace ompl::vamp
 {
@@ -79,12 +74,10 @@ namespace ompl::vamp
      *
      * @par Usage
      * @code
-     * // Create environment
      * vamp::collision::Environment<float> env;
      * env.spheres.emplace_back(vamp::collision::factory::sphere::array({0.5f, 0.0f, 0.5f}, 0.1f));
      * env.sort();
      *
-     * // Setup and plan with any OMPL planner
      * ompl::vamp::VAMPSetup<vamp::robots::Panda> setup(env);
      * setup.setStartGoal({0, -0.785, 0, -2.356, 0, 1.571, 0.785},
      *                    {2.35, 1.0, 0, -0.8, 0, 2.5, 0.785});
@@ -101,13 +94,6 @@ namespace ompl::vamp
     public:
         using Environment = ::vamp::collision::Environment<::vamp::FloatVector<rake>>;
 
-        /** \brief Construct a VAMPSetup from a float-precision environment.
-         *
-         * The environment is vectorized internally for SIMD collision checking.
-         * Joint limits are automatically configured from the robot definition.
-         *
-         * @param environment VAMP collision environment with obstacles
-         */
         explicit VAMPSetup(const ::vamp::collision::Environment<float> &environment)
           : env_(environment), ss_(std::make_shared<VampStateSpace<Robot>>())
         {
@@ -116,15 +102,10 @@ namespace ompl::vamp
             si->setMotionValidator(std::make_shared<VampMotionValidator<Robot, rake>>(si, env_));
         }
 
-        /** \brief Set start and goal joint configurations.
-         *
-         * @param start Start configuration as a vector of joint values
-         * @param goal Goal configuration as a vector of joint values
-         */
         void setStartGoal(const std::vector<double> &start, const std::vector<double> &goal)
         {
-            ob::ScopedState<> s(ss_.getStateSpace());
-            ob::ScopedState<> g(ss_.getStateSpace());
+            ompl::base::ScopedState<> s(ss_.getStateSpace());
+            ompl::base::ScopedState<> g(ss_.getStateSpace());
             for (std::size_t i = 0; i < Robot::dimension; ++i)
             {
                 s[i] = start[i];
@@ -133,63 +114,47 @@ namespace ompl::vamp
             ss_.setStartAndGoalStates(s, g);
         }
 
-        /** \brief Set the planner to use.
-         * @param planner OMPL planner instance
-         */
-        void setPlanner(const ob::PlannerPtr &planner)
+        void setPlanner(const ompl::base::PlannerPtr &planner)
         {
             ss_.setPlanner(planner);
         }
 
-        /** \brief Solve the motion planning problem.
-         * @param timeout Planning timeout in seconds
-         * @return Planner status
-         */
-        ob::PlannerStatus solve(double timeout)
+        ompl::base::PlannerStatus solve(double timeout)
         {
             return ss_.solve(timeout);
         }
 
-        /** \brief Access the underlying SimpleSetup for advanced configuration. */
-        og::SimpleSetup &getSimpleSetup()
+        ompl::geometric::SimpleSetup &getSimpleSetup()
         {
             return ss_;
         }
 
-        /** \brief Get the space information. */
-        ob::SpaceInformationPtr getSpaceInformation() const
+        ompl::base::SpaceInformationPtr getSpaceInformation() const
         {
             return ss_.getSpaceInformation();
         }
 
-        /** \brief Get the state space. */
-        ob::StateSpacePtr getStateSpace() const
+        ompl::base::StateSpacePtr getStateSpace() const
         {
             return ss_.getStateSpace();
         }
 
-        /** \brief Get the solution path (valid only after a successful solve). */
-        og::PathGeometric &getSolutionPath()
+        ompl::geometric::PathGeometric &getSolutionPath()
         {
             return ss_.getSolutionPath();
         }
 
-        /** \brief Get the vectorized environment. */
         const Environment &getEnvironment() const
         {
             return env_;
         }
 
-        /** \brief Clear the current planner data and problem definition for reuse. */
         void clear()
         {
             ss_.clear();
         }
 
         /** \brief Run a benchmark comparing multiple planners on the current problem.
-         *
-         * Uses OMPL's built-in Benchmark tool to compare planners with VAMP acceleration.
-         * Results are saved as an OMPL-compliant log file.
          *
          * @param planners Map of planner name to factory function
          * @param runs Number of runs per planner
@@ -198,11 +163,12 @@ namespace ompl::vamp
          * @return Path to the generated log file
          */
         std::string benchmark(
-            const std::map<std::string, std::function<ob::PlannerPtr(const ob::SpaceInformationPtr &)>> &planners,
+            const std::map<std::string,
+                           std::function<ompl::base::PlannerPtr(const ompl::base::SpaceInformationPtr &)>> &planners,
             unsigned int runs = 50, double timeout = 5.0,
             const std::string &experimentName = "VAMP Benchmark")
         {
-            ot::Benchmark b(ss_, experimentName);
+            ompl::tools::Benchmark b(ss_, experimentName);
             b.addExperimentParameter("robot", "STRING", std::string(Robot::name));
             b.addExperimentParameter("dimension", "INTEGER", std::to_string(Robot::dimension));
             b.addExperimentParameter("simd_width", "INTEGER", std::to_string(rake));
@@ -211,7 +177,7 @@ namespace ompl::vamp
             for (const auto &[name, factory] : planners)
                 b.addPlanner(factory(si), name);
 
-            ot::Benchmark::Request request(timeout, 4096.0, runs);
+            ompl::tools::Benchmark::Request request(timeout, 4096.0, runs);
             b.benchmark(request);
 
             std::string filename = generateLogFilename(experimentName);
@@ -221,15 +187,15 @@ namespace ompl::vamp
 
     private:
         Environment env_;
-        og::SimpleSetup ss_;
+        ompl::geometric::SimpleSetup ss_;
 
-        std::string generateLogFilename(const std::string &name) const
+        std::string generateLogFilename(const std::string & /*name*/) const
         {
             auto now = std::chrono::system_clock::now();
             auto t = std::chrono::system_clock::to_time_t(now);
-            std::ostringstream ss;
-            ss << "vamp_" << Robot::name << "_" << std::put_time(std::localtime(&t), "%Y%m%d_%H%M%S") << ".log";
-            return ss.str();
+            std::ostringstream oss;
+            oss << "vamp_" << Robot::name << "_" << std::put_time(std::localtime(&t), "%Y%m%d_%H%M%S") << ".log";
+            return oss.str();
         }
     };
 
