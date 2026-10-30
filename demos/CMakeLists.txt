@@ -98,6 +98,17 @@ if (OMPL_BUILD_DEMOS)
         target_include_directories(demo_VAMPAllPlanners PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/vamp)
         target_link_libraries(demo_VAMPAllPlanners PRIVATE vamp_cpp)
 
+        # Registry-based VAMP demo with benchmarking and visualization support
+        if(yaml-cpp_FOUND)
+            add_ompl_demo(demo_Vamp vamp/demos/VampDemo.cpp)
+            target_include_directories(demo_Vamp PRIVATE
+                ${CMAKE_CURRENT_SOURCE_DIR}/vamp/core
+                ${CMAKE_CURRENT_SOURCE_DIR}/vamp/utilities
+                ${CMAKE_CURRENT_SOURCE_DIR}/vamp/benchmarking
+                ${CMAKE_CURRENT_SOURCE_DIR}/vamp/examples)
+            target_link_libraries(demo_Vamp PRIVATE vamp_cpp yaml-cpp::yaml-cpp)
+        endif()
+
         # Flat planning uses the same arm and the same cage of spheres as the VAMP demo above.
         add_ompl_demo(demo_FlatManipulatorPlanning flat/FlatManipulatorPlanning.cpp)
         target_link_libraries(demo_FlatManipulatorPlanning PRIVATE vamp_cpp)
