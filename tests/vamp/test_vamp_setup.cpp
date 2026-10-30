@@ -55,8 +55,15 @@ using Robot = vamp::robots::Panda;
 static auto makeTestEnvironment() -> vamp::collision::Environment<float>
 {
     vamp::collision::Environment<float> env;
-    env.spheres.emplace_back(vamp::collision::factory::sphere::array({0.5f, 0.f, 0.5f}, 0.1f));
-    env.spheres.emplace_back(vamp::collision::factory::sphere::array({-0.3f, 0.3f, 0.3f}, 0.15f));
+    constexpr float r = 0.2f;
+    for (auto &pos : std::vector<std::array<float, 3>>{
+             {0.55f, 0.f, 0.25f},
+             {0.35f, 0.35f, 0.25f},
+             {0.f, 0.55f, 0.25f},
+             {-0.55f, 0.f, 0.25f},
+             {-0.35f, -0.35f, 0.25f},
+             {0.f, -0.55f, 0.25f}})
+        env.spheres.emplace_back(vamp::collision::factory::sphere::array(pos, r));
     env.sort();
     return env;
 }
