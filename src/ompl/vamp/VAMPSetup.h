@@ -175,7 +175,11 @@ namespace ompl::vamp
 
             auto si = ss_.getSpaceInformation();
             for (const auto &[name, factory] : planners)
-                b.addPlanner(factory(si), name);
+            {
+                auto planner = factory(si);
+                planner->setName(name);
+                b.addPlanner(planner);
+            }
 
             ompl::tools::Benchmark::Request request(timeout, 4096.0, runs);
             b.benchmark(request);
