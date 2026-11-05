@@ -1,6 +1,6 @@
 [submodule "external/vamp"]
 	path = external/vamp
-	url = https://github.com/KavrakiLab/vamp
+	url = https://github.com/saahu27/vamp.git
 	branch = main
 	update = checkout
 [submodule "external/nanobind"]
