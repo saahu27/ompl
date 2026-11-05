@@ -82,7 +82,7 @@ function(setup_vamp_simd_environment)
     set(_VAMP_OLD_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE INTERNAL "Stored CXX flags before VAMP SIMD setup")
 
     # Determine SIMD flags based on architecture and build mode
-    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|amd64)$")
         if(VAMP_PORTABLE_BUILD)
             set(SIMD_FLAGS_LIST "-march=x86-64" "-mavx2" "-mfma" "-mbmi2")
             message(STATUS "VAMP: Using portable SIMD flags for x86_64 (with BMI2)")
@@ -90,7 +90,7 @@ function(setup_vamp_simd_environment)
             set(SIMD_FLAGS_LIST "-march=native" "-mavx2")
             message(STATUS "VAMP: Using native SIMD flags for x86_64")
         endif()
-    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+    elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "ARM64")
         if(VAMP_PORTABLE_BUILD)
             set(SIMD_FLAGS_LIST "-march=armv8-a")
             message(STATUS "VAMP: Using portable SIMD flags for ARM64")
@@ -102,6 +102,11 @@ function(setup_vamp_simd_environment)
         message(WARNING "Unsupported architecture ${CMAKE_SYSTEM_PROCESSOR} for VAMP; disabling VAMP integration")
         set(VAMP_ARCH_UNSUPPORTED TRUE PARENT_SCOPE)
         return()
+    endif()
+
+    # Portable builds: stop VAMP's CompilerSettings.cmake from re-adding -march/-mcpu=native.
+    if(VAMP_PORTABLE_BUILD)
+        set(VAMP_ARCH "" PARENT_SCOPE)
     endif()
 
     # Convert list to space-separated string for CMAKE_C_FLAGS
